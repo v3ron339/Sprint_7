@@ -4,30 +4,22 @@ from methods.courier_methods import CourierMethods
 
 
 @pytest.fixture
-def create_and_delete_courier():
+def courier():
+    # Генерация данных курьера
     courier_data = generate_fake_courier()
-    login = courier_data['login']
-    password = courier_data['password']
 
+    # Создание курьера
     CourierMethods.create_courier(courier_data)
 
-    yield login, password
+    yield courier_data
+
+    # После теста удалиение курьера
+    login = courier_data["login"]
+    password = courier_data["password"]
 
     login_response = CourierMethods.login_courier(login, password)
-    courier_id = login_response.json().get('id', None)
 
-    if courier_id is not None:
-        CourierMethods.delete_courier(courier_id)
-
-
-
-@pytest.fixture
-def delete_courier():
-    created_credentials = []
-    yield created_credentials
-    for login, password in created_credentials:
-        login_response = CourierMethods.login_courier(login, password)
-        if login_response.status_code == 200:
-            courier_id = login_response.json().get('id')
-            if courier_id:
-                CourierMethods.delete_courier(courier_id)
+    if login_response.status_code == 200:
+        courier_id = login_response.json().get("id")
+        if courier_id:
+            CourierMethods.delete_courier(courier_id)

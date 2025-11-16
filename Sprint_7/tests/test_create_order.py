@@ -7,10 +7,10 @@ from helper import modify_order_data
 class TestCreateOrder:
 
     @allure.title('Создание заказа с выбором самоката разного цвета')
-    @pytest.mark.parametrize('color', [["BLACK"], ["GREY"], ["BLACK", "GREY"], []])
+    @pytest.mark.parametrize("color", [["BLACK"], ["GREY"], ["BLACK", "GREY"], []])
     def test_create_order_with_different_colors_success(self, color):
         with allure.step('Создать заказ с указанным цветом самоката'):
-            order_body = modify_order_data('color', color)
+            order_body = modify_order_data("color", color)
 
         with allure.step('Отправить POST запрос на создание заказа'):
             response = OrderMethods.create_order(order_body)

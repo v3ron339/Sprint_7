@@ -9,78 +9,63 @@ from data import Message, TestData
 class TestLoginCourier:
 
     @allure.title('Успешная авторизация курьера')
-    def test_login_courier_success(self, create_and_delete_courier):
-        login, password = create_and_delete_courier
+    def test_login_courier_success(self, courier):
+        with allure.step('Получить логин и пароль созданного курьера'):
+            login = courier["login"]
+            password = courier["password"]
 
         with allure.step('Отправить POST-запрос на авторизацию курьера'):
             response = CourierMethods.login_courier(login, password)
 
-        with allure.step('Проверить, что статус-код 200 и успешный запрос возвращает id'):
+        with allure.step('Проверить, что статус-код 200 и в ответе есть id'):
             assert response.status_code == 200
             assert 'id' in response.json()
             assert isinstance(response.json()['id'], int)
 
     @allure.title('Нельзя авторизоваться без логина')
-    def test_login_courier_without_login_error(self, delete_courier):
-        with allure.step('Создать курьера'):
-            courier_data = generate_fake_courier()
-            login = courier_data['login']
-            password = courier_data['password']
+    def test_login_courier_without_login_error(self, courier):
+        with allure.step('Получить пароль созданного курьера'):
+            password = courier["password"]
 
-            create_response = CourierMethods.create_courier(courier_data)
-            assert create_response.status_code == 201
+        with allure.step('Отправить POST-запрос без логина'):
+            response = CourierMethods.login_courier("", password)
 
-            delete_courier.append((login, password))
-
-        with allure.step('Отправить POST-запрос на авторизацию без логина'):
-            response = CourierMethods.login_courier('', password)
-
-        with allure.step('Проверить, что статус-код 400 и правильное сообщение об ошибке'):
+        with allure.step('Проверить код 400 и сообщение об ошибке'):
             assert response.status_code == 400
-            assert 'message' in response.json()
-            assert response.json()['message'] == Message.LOGIN_COURIER_MISSING_FIELDS
+            assert response.json().get("message") == Message.LOGIN_COURIER_MISSING_FIELDS
 
     @allure.title('Нельзя авторизоваться без пароля')
-    def test_login_courier_without_password_error(self, delete_courier):
-        with allure.step('Создать курьера'):
-            courier_data = generate_fake_courier()
-            login = courier_data['login']
-            password = courier_data['password']
+    def test_login_courier_without_password_error(self, courier):
+        with allure.step('Получить логин созданного курьера'):
+            login = courier["login"]
 
-            create_response = CourierMethods.create_courier(courier_data)
-            assert create_response.status_code == 201
+        with allure.step('Отправить POST-запрос без пароля'):
+            response = CourierMethods.login_courier(login, "")
 
-            delete_courier.append((login, password))
-
-        with allure.step('Отправить POST-запрос на авторизацию без пароля'):
-            response = CourierMethods.login_courier(login, '')
-
-        with allure.step('Проверить, что статус-код 400 и правильное сообщение об ошибке'):
+        with allure.step('Проверить код 400 и сообщение об ошибке'):
             assert response.status_code == 400
-            assert 'message' in response.json()
-            assert response.json()['message'] == Message.LOGIN_COURIER_MISSING_FIELDS
+            assert response.json().get("message") == Message.LOGIN_COURIER_MISSING_FIELDS
 
     @allure.title('Нельзя авторизоваться с несуществующим логином')
-    def test_login_courier_invalid_login_error(self, create_and_delete_courier):
-        _, password = create_and_delete_courier
+    def test_login_courier_invalid_login_error(self, courier):
+        with allure.step('Получить пароль созданного курьера'):
+            password = courier["password"]
 
-        with allure.step('Отправить POST-запрос на авторизацию с несуществующим логином'):
+        with allure.step('Отправить POST-запрос с неверным логином'):
             response = CourierMethods.login_courier(TestData.NONEXISTENT_LOGIN, password)
 
-        with allure.step('Проверить, что статус-код 404 и правильное сообщение об ошибке'):
+        with allure.step('Проверить код 404 и сообщение «Курьер не найден»'):
             assert response.status_code == 404
-            response_data = response.json()
-            assert 'message' in response_data
-            assert response_data['message'] == Message.LOGIN_COURIER_NOT_FOUND
+            assert response.json().get("message") == Message.LOGIN_COURIER_NOT_FOUND
 
     @allure.title('Нельзя авторизоваться с несуществующим паролем')
-    def test_login_courier_invalid_password_error(self, create_and_delete_courier):
-        login, _ = create_and_delete_courier
+    def test_login_courier_invalid_password_error(self, courier):
+        with allure.step('Получить логин созданного курьера'):
+            login = courier["login"]
 
-        with allure.step('Отправить POST-запрос на авторизацию с несуществующим паролем'):
+        with allure.step('Отправить POST-запрос с неверным паролем'):
             response = CourierMethods.login_courier(login, TestData.NONEXISTENT_PASSWORD)
 
-        with allure.step('Проверить, что статус-код 404 и правильное сообщение о ошибке'):
+        with allure.step('Проверить код 404 и сообщение «Курьер не найден»'):
             assert response.status_code == 404
-            assert 'message' in response.json()
-            assert response.json()['message'] == Message.LOGIN_COURIER_NOT_FOUND
+            assert response.json().get("message") == Message.LOGIN_COURIER_NOT_FOUND
